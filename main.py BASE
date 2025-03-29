@@ -1,0 +1,73 @@
+import toga
+from toga.style import Pack
+from toga.style.pack import COLUMN, ROW
+import sounddevice as sd
+import numpy as np
+import wave
+
+
+class FaunaVoxApp(toga.App):
+    def __init__(self, *args, **kwargs):
+        self.name = "FaunaVox"
+        super().__init__(*args, **kwargs)
+
+    def startup(self):
+        print("Starting up...")
+        self.main_window = toga.MainWindow(title=self.name)
+
+        # Record Button
+        self.record_button = toga.Button("🎤 Record Sound", on_press=self.record_sound, style=Pack(
+            margin=10,
+            background_color= '#4CAF50',
+            font_size= 18,
+            width=200,
+            height=60,
+        ))
+
+        # Label
+        self.status_label = toga.Label("Press the button to record.", style=Pack(
+            margin=10,
+            font_size=16,
+            font_weight='bold',
+            color='#4CAF50',
+            align_items="center",
+        ))
+
+        # App Layout
+        box = toga.Box(children=[self.record_button, self.status_label], style=Pack(
+            direction=COLUMN,
+            margin=20,
+            background_color='#f3f4f6',
+            align_items="center",
+        ))
+
+        self.main_window.content = box
+        self.main_window.show()
+        print("Window should be shown now.")
+
+    def record_sound(self, widget):
+        self.status_label.text = "Recording..."
+
+        # Record for 3 seconds
+        fs = 44100  # Sample rate
+        duration = 6  # seconds
+        recording = sd.rec(int(duration * fs), samplerate=fs, channels=1, dtype=np.int16)
+        sd.wait()  # Wait for recording to finish
+
+        # Save to a WAV file
+        filename = "sound.wav"
+        with wave.open(filename, "wb") as wf:
+            wf.setnchannels(1)
+            wf.setsampwidth(2)
+            wf.setframerate(fs)
+            wf.writeframes(recording.tobytes())
+
+        self.status_label.text = f"Recording saved: {filename}"
+
+
+def main():
+    return FaunaVoxApp("FaunaVox", "com.faunavox.FaunaVox")
+
+
+if __name__ == "__main__":
+    main().main_loop()
